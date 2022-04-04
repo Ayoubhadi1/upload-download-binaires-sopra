@@ -62,6 +62,20 @@ public class FilesController {
     return ResponseEntity.status(HttpStatus.OK).body(fileInfos);
   }
 
+  @GetMapping("/searchfiles/{filename}")
+  public ResponseEntity<?> getListFilesByName(@PathVariable("filename") String filename) {
+    List<FileInfo> fileInfos = storageService.loadAll().map(path -> {
+      String filename2 = path.getFileName().toString();
+      String url = MvcUriComponentsBuilder
+              .fromMethodName(FilesController.class, "getFile", path.getFileName().toString()).build().toString();
+
+      return new FileInfo(filename2, url);
+    }).filter(fileInfo -> {return fileInfo.getName().contains(filename);}).collect(Collectors.toList());
+
+    if(fileInfos.isEmpty()) return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body("fichier inexistant");
+    else return ResponseEntity.status(HttpStatus.OK).body(fileInfos);
+  }
+
   @GetMapping("/files/{filename:.+}")
   public ResponseEntity<Resource> getFile(@PathVariable String filename) {
     Resource file = storageService.load(filename);
